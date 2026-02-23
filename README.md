@@ -76,8 +76,10 @@ Each round represents one week of operations. Every round you:
 
 1. **Review demand** -- See how many units customers want this round, along with a forecast and trend indicator.
 2. **Order from suppliers** -- Choose a supplier and enter the quantity to order. Orders take time to arrive (lead time).
-3. **Fulfill orders** -- Ship units from your warehouse inventory to customers. Choose a shipping method (Ground, Express, or Air).
+3. **Fulfill orders** -- Ship units from your warehouse inventory to customers. Choose a shipping method (Ground, Express, or Air). Cheaper methods have a higher chance of late delivery penalties.
 4. **End the round** -- Costs are calculated, revenue is earned, and you see a summary of what happened.
+
+> **Tip:** Look for the **?** icons next to each panel header for help tooltips explaining what each section does and how to make decisions.
 
 ### Goal
 
@@ -115,7 +117,7 @@ The game progressively introduces 10 supply chain concepts with tutorial popups:
 | Bullwhip Effect | Round 13 | How small demand changes amplify upstream in the supply chain |
 | Order Fulfillment | Round 15 | Measuring fill rate and on-time delivery |
 | Total Cost of Ownership | Round 17 | Why the cheapest supplier isn't always the best choice |
-| Logistics & Transportation | Round 21 | Speed vs. cost trade-offs in shipping |
+| Logistics & Transportation | Round 21 | Cost vs. late delivery risk trade-offs in shipping |
 | Supply Disruptions | Round 22 | Dealing with unexpected events that break the supply chain |
 
 ## Suppliers
@@ -133,9 +135,9 @@ The game progressively introduces 10 supply chain concepts with tutorial popups:
 | Holding cost | $0.50 per unit per round |
 | Stockout penalty | $3.00 per unfulfilled unit |
 | Late delivery penalty | $1.50 per unit |
-| Ground shipping | $1/unit (2 rounds) |
-| Express shipping | $3/unit (1 round) |
-| Air freight | $5/unit (same round) |
+| Ground shipping | $1/unit (25% late delivery risk) |
+| Express shipping | $3/unit (8% late delivery risk) |
+| Air freight | $5/unit (no late delivery risk) |
 
 ## End of Game
 
