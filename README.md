@@ -9,15 +9,66 @@ Built with React, Tailwind CSS, Recharts, and Lucide icons.
 
 ## How to Run
 
-```bash
-# Install dependencies
-npm install
+### Prerequisites
 
-# Start the dev server
-npm run dev
-```
+You need **Node.js** installed on your computer. Node.js is a free tool that lets you run JavaScript applications.
 
-Then open `http://localhost:5173` in your browser.
+1. Go to [https://nodejs.org](https://nodejs.org)
+2. Download the **LTS** (Long Term Support) version -- this is the big green button on the homepage
+3. Run the installer and accept all the default settings
+4. To verify it installed correctly, open a terminal and type:
+   ```bash
+   node --version
+   ```
+   You should see a version number like `v20.x.x` or `v24.x.x`. If you see an error, try restarting your terminal or computer.
+
+> **How to open a terminal:**
+> - **Windows:** Press `Win + R`, type `cmd`, and press Enter. Or search for "Command Prompt" or "PowerShell" in the Start menu.
+> - **Mac:** Press `Cmd + Space`, type "Terminal", and press Enter.
+> - **Linux:** Press `Ctrl + Alt + T`.
+
+### Setup and Start
+
+1. **Download this project** -- Click the green **Code** button at the top of this GitHub page, then click **Download ZIP**. Unzip the folder somewhere on your computer. (Or if you know git: `git clone https://github.com/owenfleming/supply-chain-game.git`)
+
+2. **Open a terminal in the project folder** -- Navigate to the unzipped folder:
+   ```bash
+   cd path/to/supply-chain-game
+   ```
+   For example, if you unzipped it to your Downloads folder:
+   ```bash
+   cd ~/Downloads/supply-chain-game-main
+   ```
+
+3. **Install dependencies** -- This downloads all the libraries the game needs (only required once):
+   ```bash
+   npm install
+   ```
+   This may take a minute or two. You'll see a progress bar and then a success message.
+
+4. **Start the game:**
+   ```bash
+   npm run dev
+   ```
+   You should see output that includes a URL like:
+   ```
+   Local: http://localhost:5173/
+   ```
+
+5. **Open the game** -- Open your web browser (Chrome, Firefox, Edge, etc.) and go to:
+   ```
+   http://localhost:5173
+   ```
+   The game should load and you'll see the title screen.
+
+6. **To stop the game** -- Go back to your terminal and press `Ctrl + C`.
+
+### Troubleshooting
+
+- **"npm: command not found"** -- Node.js isn't installed or your terminal needs to be restarted. Go back to the Prerequisites step.
+- **"EACCES permission denied"** -- On Mac/Linux, try prefixing the command with `sudo`: `sudo npm install`
+- **Page is blank** -- Check the terminal for error messages. Try stopping the server (`Ctrl + C`) and running `npm run dev` again.
+- **Port already in use** -- Another application is using port 5173. Stop that application or run `npx vite --port 3000` and open `http://localhost:3000` instead.
 
 ## How to Play
 
