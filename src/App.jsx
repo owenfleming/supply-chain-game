@@ -7,7 +7,7 @@ import {
   Package, Truck, Factory, TrendingUp, DollarSign, AlertTriangle,
   ShoppingCart, Warehouse, ArrowRight, CheckCircle, XCircle, Info,
   Star, Award, ChevronRight, Play, RotateCcw, Zap, Shield, Clock,
-  BarChart3, Target, Box, Ship, Plane, MapPin, X
+  BarChart3, Target, Box, Ship, Plane, MapPin, X, HelpCircle
 } from 'lucide-react';
 
 // ─── CONSTANTS ──────────────────────────────────────────────
@@ -34,9 +34,9 @@ const SUPPLIERS = [
 ];
 
 const SHIPPING_METHODS = [
-  { id: 'ground', name: 'Ground', icon: 'Truck', cost: 1, speed: 2, unlockLevel: 0 },
-  { id: 'express', name: 'Express', icon: 'Truck', cost: 3, speed: 1, unlockLevel: 0 },
-  { id: 'air', name: 'Air Freight', icon: 'Plane', cost: 5, speed: 0, unlockLevel: 2 },
+  { id: 'ground', name: 'Ground', icon: 'Truck', cost: 1, speed: 2, latePenaltyPct: 0.25, unlockLevel: 0, desc: 'Cheapest option but slowest delivery. 25% of units risk late delivery penalties.' },
+  { id: 'express', name: 'Express', icon: 'Truck', cost: 3, speed: 1, latePenaltyPct: 0.08, unlockLevel: 0, desc: 'Balanced speed and cost. Only 8% of units risk late delivery penalties.' },
+  { id: 'air', name: 'Air Freight', icon: 'Plane', cost: 5, speed: 0, latePenaltyPct: 0, unlockLevel: 2, desc: 'Most expensive but fastest. No risk of late delivery penalties.' },
 ];
 
 const CONCEPTS = {
@@ -444,11 +444,20 @@ function gameReducer(state, action) {
       roundRevenue += revenue;
       s.cash += revenue;
 
+      // Late delivery penalties based on shipping speed
+      const lateUnits = Math.floor(fulfillQty * shippingMethod.latePenaltyPct);
+      if (lateUnits > 0) {
+        const latePenalty = lateUnits * LATE_PENALTY;
+        roundPenalties += latePenalty;
+        s.cash -= latePenalty;
+        tips.push(`${lateUnits} units arrived late to customers via ${shippingMethod.name} shipping, costing ${formatCurrency(latePenalty)} in late delivery penalties.`);
+      }
+
       if (unfulfilled > 0) {
         const penalty = unfulfilled * STOCKOUT_PENALTY;
         roundPenalties += penalty;
         s.cash -= penalty;
-        tips.push(`${unfulfilled} orders went unfulfilled, costing ${formatCurrency(penalty)} in penalties.`);
+        tips.push(`${unfulfilled} orders went unfulfilled, costing ${formatCurrency(penalty)} in stockout penalties.`);
       }
 
       s.inventory -= fulfillQty;
@@ -509,6 +518,7 @@ function gameReducer(state, action) {
         demand: actualDemand,
         fulfilled: fulfillQty,
         unfulfilled,
+        lateUnits,
         revenue: roundRevenue,
         costs: roundProcurement + roundShipping + roundHolding + roundPenalties,
         profit: netProfit,
@@ -668,6 +678,42 @@ function gameReducer(state, action) {
 
 const IconMap = { Ship, Factory, TrendingUp, AlertTriangle, Truck, Plane };
 
+// ─── HELP TOOLTIP COMPONENT ──────────────────────────────
+
+function HelpTooltip({ text }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative inline-block">
+      <button
+        onClick={() => setOpen(!open)}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        className="text-gray-300 hover:text-teal transition-colors"
+        aria-label="Help"
+      >
+        <HelpCircle className="w-4 h-4" />
+      </button>
+      {open && (
+        <div className="absolute z-40 top-full left-0 mt-2 w-72 bg-navy text-white text-xs rounded-lg p-3 shadow-xl leading-relaxed whitespace-pre-line">
+          {text}
+          <div className="absolute bottom-full left-4 w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-l-transparent border-r-transparent border-b-navy" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── PANEL HELP TEXT ────────────────────────────────────
+
+const PANEL_HELP = {
+  demand: 'This shows how many units customers want to buy this round. The forecast is an estimate for next round (it\'s intentionally imperfect). Use the trend indicator and history chart to plan your orders ahead of time.',
+  suppliers: 'Order raw materials here. Each supplier has different trade-offs:\n• Cost — price per unit\n• Lead Time — rounds until delivery\n• Reliability — chance the order arrives on time (otherwise delayed 1 round)\n• Quality — % of units that are usable (rest are defective)\nYou can order from multiple suppliers in the same round.',
+  warehouse: 'Your inventory storage. Units you order from suppliers arrive here after their lead time. Holding inventory costs $0.50/unit/round, so don\'t overstock — but running out means you can\'t fulfill orders.',
+  shipping: 'Choose how to ship orders to customers. Faster shipping costs more per unit but reduces the chance of late delivery penalties ($1.50/unit late). Ground is cheapest but 25% of units risk late penalties. Air freight has zero late risk but costs $5/unit.',
+  financials: 'Your profit and loss statement. Revenue comes from fulfilled orders ($15/unit). Costs include procurement (supplier orders), shipping, holding (inventory storage), and penalties (stockouts + late deliveries). Go bankrupt and the game ends.',
+  bullwhip: 'This chart compares what customers actually ordered (teal) vs. what you ordered from suppliers (amber). If your orders swing much more than demand, you\'re experiencing the bullwhip effect — try to order more steadily.',
+};
+
 // ─── SUB-COMPONENTS ───────────────────────────────────────
 
 function TopBar({ state }) {
@@ -755,6 +801,7 @@ function DemandPanel({ state }) {
       <div className="flex items-center gap-2 mb-4">
         <ShoppingCart className="w-5 h-5 text-teal" />
         <h3 className="font-bold text-navy">Customer Demand</h3>
+        <HelpTooltip text={PANEL_HELP.demand} />
       </div>
       <div className="mb-3">
         <div className="text-3xl font-bold text-navy">{effectiveDemand} units</div>
@@ -802,6 +849,7 @@ function SupplierPanel({ state, dispatch }) {
       <div className="flex items-center gap-2 mb-4">
         <Factory className="w-5 h-5 text-teal" />
         <h3 className="font-bold text-navy">Suppliers</h3>
+        <HelpTooltip text={PANEL_HELP.suppliers} />
       </div>
       <div className="space-y-3">
         {availableSuppliers.map(supplier => {
@@ -859,6 +907,7 @@ function WarehousePanel({ state }) {
       <div className="flex items-center gap-2 mb-4">
         <Warehouse className="w-5 h-5 text-teal" />
         <h3 className="font-bold text-navy">Warehouse</h3>
+        <HelpTooltip text={PANEL_HELP.warehouse} />
       </div>
       <div className="mb-3">
         <div className="flex justify-between text-sm mb-1">
@@ -929,6 +978,7 @@ function ShippingPanel({ state, dispatch }) {
       <div className="flex items-center gap-2 mb-4">
         <Truck className="w-5 h-5 text-teal" />
         <h3 className="font-bold text-navy">Fulfillment & Shipping</h3>
+        <HelpTooltip text={PANEL_HELP.shipping} />
       </div>
       <div className="mb-3">
         <div className="text-sm text-gray-600 mb-2">
@@ -978,7 +1028,7 @@ function ShippingPanel({ state, dispatch }) {
               <div className="flex-1">
                 <div className="text-sm font-medium">{method.name}</div>
                 <div className="text-xs text-gray-500">
-                  ${method.cost}/unit · {method.speed === 0 ? 'Same round' : `${method.speed} round${method.speed > 1 ? 's' : ''}`}
+                  ${method.cost}/unit · {method.latePenaltyPct === 0 ? 'No late risk' : `${Math.round(method.latePenaltyPct * 100)}% late risk`}
                 </div>
               </div>
               {state.selectedShipping === method.id && (
@@ -988,14 +1038,25 @@ function ShippingPanel({ state, dispatch }) {
           );
         })}
       </div>
-      {state.fulfillQty > 0 && (
-        <div className="mt-3 bg-slate-50 rounded-lg p-2 text-sm">
-          <span className="text-gray-600">Shipping cost: </span>
-          <span className="font-bold text-navy">
-            {formatCurrency(state.fulfillQty * (SHIPPING_METHODS.find(m => m.id === state.selectedShipping)?.cost || 0))}
-          </span>
-        </div>
-      )}
+      {state.fulfillQty > 0 && (() => {
+        const selMethod = SHIPPING_METHODS.find(m => m.id === state.selectedShipping);
+        const estLate = Math.floor(state.fulfillQty * selMethod.latePenaltyPct);
+        return (
+          <div className="mt-3 bg-slate-50 rounded-lg p-2 text-sm space-y-1">
+            <div>
+              <span className="text-gray-600">Shipping cost: </span>
+              <span className="font-bold text-navy">
+                {formatCurrency(state.fulfillQty * selMethod.cost)}
+              </span>
+            </div>
+            {estLate > 0 && (
+              <div className="text-xs text-amber-dark">
+                Est. ~{estLate} units may arrive late (+{formatCurrency(estLate * LATE_PENALTY)} penalty risk)
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -1010,6 +1071,7 @@ function FinancialsPanel({ state }) {
       <div className="flex items-center gap-2 mb-4">
         <DollarSign className="w-5 h-5 text-teal" />
         <h3 className="font-bold text-navy">Financials</h3>
+        <HelpTooltip text={PANEL_HELP.financials} />
       </div>
       {state.round > 1 && (
         <div className="mb-3 bg-slate-50 rounded-lg p-3">
@@ -1086,6 +1148,7 @@ function BullwhipChart({ state }) {
       <div className="flex items-center gap-2 mb-4">
         <Zap className="w-5 h-5 text-amber" />
         <h3 className="font-bold text-navy">Bullwhip Effect Monitor</h3>
+        <HelpTooltip text={PANEL_HELP.bullwhip} />
       </div>
       <p className="text-xs text-gray-500 mb-3">
         Compare your order quantities vs. actual customer demand. Large divergences indicate the bullwhip effect.
@@ -1150,6 +1213,12 @@ function RoundSummary({ summary, tips, onNext, isLastRound }) {
               {summary.fillRate}%
             </div>
           </div>
+          {summary.lateUnits > 0 && (
+            <div className="bg-amber-50 rounded-lg p-3 col-span-2">
+              <div className="text-xs text-amber-dark">Late Deliveries</div>
+              <div className="text-lg font-bold text-amber-dark">{summary.lateUnits} units (penalty: {formatCurrency(summary.lateUnits * LATE_PENALTY)})</div>
+            </div>
+          )}
         </div>
         <div className="flex justify-between text-sm mb-2">
           <span className="text-gray-600">Revenue</span>
